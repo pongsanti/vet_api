@@ -8,6 +8,25 @@ before do
   @payload = req_body.empty? ? {} : JSON.parse(req_body, symbolize_names: true)
 end
 
+
+CORS_HASH = {
+  'Access-Control-Allow-Origin' => '*',
+  'Access-Control-Allow-Methods' => 'HEAD,GET,PATCH,POST,DELETE,OPTIONS',
+  'Access-Control-Allow-Headers' => 'X-Authorization, Content-Type' }
+
+after do
+  # CORS
+  unless request.request_method == 'OPTIONS'
+    headers CORS_HASH
+  end
+end
+
+# CORS
+options "*" do
+  headers CORS_HASH
+  200
+end
+
 # doctors
 get '/doctors' do
   doctors = DB[:doctors].order(:id)
