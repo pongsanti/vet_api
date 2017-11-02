@@ -29,7 +29,7 @@ end
 
 # doctors
 get '/doctors' do
-  doctors = DB[:doctors].order(:id)
+  doctors = DB[:doctors].where(deleted_at: nil).order(:id)
   [200, JSON.generate(doctors: doctors.all)]
 end
 
@@ -38,15 +38,31 @@ post '/doctors' do
   [201, JSON.generate(message: 'OK')]
 end
 
+delete '/doctors/:id' do
+  id = params[:id]
+  if id
+    DB[:doctors].where(id: id).update(deleted_at: DateTime.now)
+  end
+  [200, JSON.generate(message: 'OK')]
+end
+
 # vehicles
 get '/vehicles' do
-  vehicles = DB[:vehicles].order(:id)
+  vehicles = DB[:vehicles].where(deleted_at: nil).order(:id)
   [200, JSON.generate(vehicles: vehicles.all)]
 end
 
 post '/vehicles' do
   DB[:vehicles].insert(@payload)
   [201, JSON.generate(message: 'OK')]
+end
+
+delete '/vehicles/:id' do
+  id = params[:id]
+  if id
+    DB[:vehicles].where(id: id).update(deleted_at: DateTime.now)
+  end
+  [200, JSON.generate(message: 'OK')]
 end
 
 # doctor apps

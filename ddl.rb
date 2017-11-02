@@ -5,12 +5,14 @@ DB.drop_table? :doctor_apps, :vehicle_apps, :doctors, :vehicles
 DB.create_table(:doctors) do
   primary_key :id
   String      :name, null: false
+  DateTime    :deleted_at
 end
 
 DB.create_table(:vehicles) do
   primary_key :id
   String      :type
   String      :plate, null: false
+  DateTime    :deleted_at
 end
 
 DB.create_table(:doctor_apps) do
