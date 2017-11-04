@@ -2,6 +2,8 @@ require 'json'
 require 'sinatra'
 require_relative './connection'
 
+DATE_TIME_FORMAT = '%d/%m/%Y %H:%M'
+
 # Hooks
 before do
   req_body = request.body.read
@@ -18,6 +20,12 @@ after do
   # CORS
   unless request.request_method == 'OPTIONS'
     headers CORS_HASH
+  end
+end
+
+helpers do  
+  def datetime_format datetime
+    datetime ? datetime.strftime(DATE_TIME_FORMAT) : nil
   end
 end
 
@@ -66,6 +74,18 @@ delete '/vehicles/:id' do
 end
 
 # doctor apps
+get '/doctor/apps' do
+  apps = DB[:doctor_apps].left_join(:doctors, id: :doctor_id).order(Sequel[:doctor_apps][:id]).all
+
+  apps = apps.map do |a|
+    a[:start_at] = datetime_format a[:start_at]
+    a[:end_at] =  datetime_format a[:end_at]
+    a
+  end
+
+  [200, JSON.generate(apps: apps)]
+end
+
 post '/doctor/:doctor_id/apps' do
   doctor_id = params[:doctor_id]
 
