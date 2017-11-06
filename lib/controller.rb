@@ -75,7 +75,12 @@ end
 
 # doctor apps
 get '/doctor/apps' do
-  apps = DB[:doctor_apps].left_join(:doctors, id: :doctor_id).order(Sequel[:doctor_apps][:id]).all
+  da = Sequel[:doctor_apps]
+  doc = Sequel[:doctors]
+
+  apps = DB[:doctor_apps]
+    .select(da[:id], da[:doctor_id], doc[:name], da[:start_at], da[:end_at])
+    .left_join(:doctors, id: :doctor_id).order(da[:id]).all
 
   apps = apps.map do |a|
     a[:start_at] = datetime_format a[:start_at]
@@ -86,6 +91,14 @@ get '/doctor/apps' do
   [200, JSON.generate(apps: apps)]
 end
 
+delete '/doctor/apps/:id' do
+  id = params[:id]
+
+  DB[:doctor_apps].where(id: id).delete if id
+
+  [201, JSON.generate(message: 'OK')]
+end
+
 post '/doctor/:doctor_id/apps' do
   doctor_id = params[:doctor_id]
 
@@ -94,3 +107,4 @@ post '/doctor/:doctor_id/apps' do
     end_at: @payload[:end_at]);
   [201, JSON.generate(message: 'OK')]  
 end
+
