@@ -108,3 +108,37 @@ post '/doctor/:doctor_id/apps' do
   [201, JSON.generate(message: 'OK')]  
 end
 
+# vehicle apps
+get '/vehicle/apps' do
+  va = Sequel[:vehicle_apps]
+  v = Sequel[:vehicles]
+
+  apps = DB[:vehicle_apps]
+    .select(va[:id], va[:vehicle_id], v[:plate], v[:type], va[:start_at], va[:end_at])
+    .left_join(:vehicles, id: :vehicle_id).order(va[:id]).all
+
+  apps = apps.map do |a|
+    a[:start_at] = datetime_format a[:start_at]
+    a[:end_at] =  datetime_format a[:end_at]
+    a
+  end
+
+  [200, JSON.generate(apps: apps)]
+end
+
+delete '/vehicle/apps/:id' do
+  id = params[:id]
+
+  DB[:vehicle_apps].where(id: id).delete if id
+
+  [201, JSON.generate(message: 'OK')]
+end
+
+post '/vehicle/:vehicle_id/apps' do
+  vehicle_id = params[:vehicle_id]
+
+  DB[:vehicle_apps].insert(vehicle_id: vehicle_id,
+    start_at: @payload[:start_at],
+    end_at: @payload[:end_at]);
+  [201, JSON.generate(message: 'OK')]  
+end
