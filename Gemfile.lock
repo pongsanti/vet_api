@@ -2,7 +2,11 @@ GEM
   remote: https://rubygems.org/
   specs:
     daemons (1.2.4)
+    dotenv (2.2.1)
     eventmachine (1.2.5)
+    mail (2.7.0)
+      mini_mime (>= 0.1.1)
+    mini_mime (1.0.0)
     mustermann (1.0.1)
     pg (0.21.0)
     rack (2.0.3)
@@ -24,6 +28,8 @@ PLATFORMS
   ruby
 
 DEPENDENCIES
+  dotenv
+  mail
   pg
   sequel
   sinatra

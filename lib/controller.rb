@@ -1,6 +1,7 @@
 require 'json'
 require 'sinatra'
 require_relative './connection'
+require_relative './mail_setup'
 
 DATE_TIME_FORMAT = '%d/%m/%Y %H:%M'
 
@@ -74,13 +75,19 @@ delete '/vehicles/:id' do
 end
 
 # doctor apps
-get '/doctor/apps' do
+
+def select_doctor_app
   da = Sequel[:doctor_apps]
   doc = Sequel[:doctors]
 
-  apps = DB[:doctor_apps]
-    .select(da[:id], da[:doctor_id], doc[:name], da[:start_at], da[:end_at])
-    .left_join(:doctors, id: :doctor_id).order(da[:id]).all
+  DB[:doctor_apps]
+  .select(da[:id], da[:doctor_id], doc[:name], da[:start_at], da[:end_at])
+  .left_join(:doctors, id: :doctor_id)
+  .order(da[:id])
+end
+
+get '/doctor/apps' do
+  apps = select_doctor_app().all
 
   apps = apps.map do |a|
     a[:start_at] = datetime_format a[:start_at]
@@ -102,9 +109,16 @@ end
 post '/doctor/:doctor_id/apps' do
   doctor_id = params[:doctor_id]
 
-  DB[:doctor_apps].insert(doctor_id: doctor_id,
+  app_id = DB[:doctor_apps].insert(doctor_id: doctor_id,
     start_at: @payload[:start_at],
     end_at: @payload[:end_at]);
+
+  # send email
+  da = Sequel[:doctor_apps]
+  send_app_mail(select_doctor_app()
+    .where(da[:id] => app_id).first
+  )
+
   [201, JSON.generate(message: 'OK')]  
 end
 
