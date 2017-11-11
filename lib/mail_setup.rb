@@ -20,12 +20,29 @@ End at: #{obj[:end_at]}
 "
 end
 
-def send_app_mail obj
+def vehicle_app_mail_content obj
+  "
+  Vehicle plate: #{obj[:plate]}
+  Vehicle type: #{obj[:type]}
+  Start at: #{obj[:start_at]}
+  End at: #{obj[:end_at]}
+  "
+end
+
+def send_doctor_app_mail obj
+  send_app_mail('A doctor appointment created', doctor_app_mail_content(obj))
+end
+
+def send_vehicle_app_mail obj
+  send_app_mail('A vehicle appointment created', vehicle_app_mail_content(obj))
+end
+
+def send_app_mail(subject, content)
   mail = Mail.new do
     from    'admin@vet.com'
     to      ENV['MAIL_DESTINATION']
-    subject "A doctor appointment created"
-    body    doctor_app_mail_content(obj)
+    subject subject
+    body    content
   end
   Thread.new do
     mail.deliver

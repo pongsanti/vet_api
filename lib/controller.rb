@@ -111,11 +111,11 @@ post '/doctor/:doctor_id/apps' do
 
   app_id = DB[:doctor_apps].insert(doctor_id: doctor_id,
     start_at: @payload[:start_at],
-    end_at: @payload[:end_at]);
+    end_at: @payload[:end_at])
 
   # send email
   da = Sequel[:doctor_apps]
-  send_app_mail(select_doctor_app()
+  send_doctor_app_mail(select_doctor_app()
     .where(da[:id] => app_id).first
   )
 
@@ -123,13 +123,20 @@ post '/doctor/:doctor_id/apps' do
 end
 
 # vehicle apps
+def select_vehicle_app
+  va = Sequel[:vehicle_apps]
+  v = Sequel[:vehicles]
+
+  DB[:vehicle_apps]
+  .select(va[:id], va[:vehicle_id], v[:plate], v[:type], va[:start_at], va[:end_at])
+  .left_join(:vehicles, id: :vehicle_id).order(va[:id])  
+end
+
 get '/vehicle/apps' do
   va = Sequel[:vehicle_apps]
   v = Sequel[:vehicles]
 
-  apps = DB[:vehicle_apps]
-    .select(va[:id], va[:vehicle_id], v[:plate], v[:type], va[:start_at], va[:end_at])
-    .left_join(:vehicles, id: :vehicle_id).order(va[:id]).all
+  apps = select_vehicle_app().all
 
   apps = apps.map do |a|
     a[:start_at] = datetime_format a[:start_at]
@@ -151,8 +158,14 @@ end
 post '/vehicle/:vehicle_id/apps' do
   vehicle_id = params[:vehicle_id]
 
-  DB[:vehicle_apps].insert(vehicle_id: vehicle_id,
+  app_id = DB[:vehicle_apps].insert(vehicle_id: vehicle_id,
     start_at: @payload[:start_at],
-    end_at: @payload[:end_at]);
-  [201, JSON.generate(message: 'OK')]  
+    end_at: @payload[:end_at])
+    
+  # send email
+  va = Sequel[:vehicle_apps]
+  send_vehicle_app_mail(select_vehicle_app()
+    .where(va[:id] => app_id).first)
+
+  [201, JSON.generate(message: 'OK')]
 end
