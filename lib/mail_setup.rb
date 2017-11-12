@@ -15,6 +15,7 @@ end
 def doctor_app_mail_content obj
 "
 Doctor name: #{obj[:name]}
+Originator: John Doe
 Start at: #{obj[:start_at]}
 End at: #{obj[:end_at]}
 "
@@ -24,6 +25,8 @@ def vehicle_app_mail_content obj
   "
   Vehicle plate: #{obj[:plate]}
   Vehicle type: #{obj[:type]}
+  Location: Sukhumvit Rd. (#{obj[:vehicle_id]})
+  Originator: John Doe
   Start at: #{obj[:start_at]}
   End at: #{obj[:end_at]}
   "
