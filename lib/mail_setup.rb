@@ -43,7 +43,7 @@ end
 def send_app_mail(subject, content)
   mail = Mail.new do
     from    'admin@vet.com'
-    to      ENV['MAIL_DESTINATION']
+    to      ENV['MAIL_DESTINATION'].split(',')
     subject subject
     body    content
   end
