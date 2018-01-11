@@ -3,7 +3,7 @@ require 'sinatra'
 require_relative './connection'
 require_relative './mail_setup'
 
-DATE_TIME_FORMAT = '%d/%m/%Y %H:%M'
+DATE_TIME_FORMAT = '%d/%m/%Y %H:%M'.freeze
 
 # Hooks
 before do
@@ -11,27 +11,25 @@ before do
   @payload = req_body.empty? ? {} : JSON.parse(req_body, symbolize_names: true)
 end
 
-
 CORS_HASH = {
   'Access-Control-Allow-Origin' => '*',
   'Access-Control-Allow-Methods' => 'HEAD,GET,PATCH,POST,DELETE,OPTIONS',
-  'Access-Control-Allow-Headers' => 'X-Authorization, Content-Type' }
+  'Access-Control-Allow-Headers' => 'X-Authorization, Content-Type'
+}.freeze
 
 after do
   # CORS
-  unless request.request_method == 'OPTIONS'
-    headers CORS_HASH
-  end
+  headers CORS_HASH unless request.request_method == 'OPTIONS'
 end
 
-helpers do  
-  def datetime_format datetime
+helpers do
+  def datetime_format(datetime)
     datetime ? datetime.strftime(DATE_TIME_FORMAT) : nil
   end
 end
 
 # CORS
-options "*" do
+options '*' do
   headers CORS_HASH
   200
 end
@@ -49,9 +47,7 @@ end
 
 delete '/doctors/:id' do
   id = params[:id]
-  if id
-    DB[:doctors].where(id: id).update(deleted_at: DateTime.now)
-  end
+  DB[:doctors].where(id: id).update(deleted_at: Time.now) if id
   [200, JSON.generate(message: 'OK')]
 end
 
@@ -68,9 +64,7 @@ end
 
 delete '/vehicles/:id' do
   id = params[:id]
-  if id
-    DB[:vehicles].where(id: id).update(deleted_at: DateTime.now)
-  end
+  DB[:vehicles].where(id: id).update(deleted_at: DateTime.now) if id
   [200, JSON.generate(message: 'OK')]
 end
 
@@ -81,17 +75,19 @@ def select_doctor_app
   doc = Sequel[:doctors]
 
   DB[:doctor_apps]
-  .select(da[:id], da[:doctor_id], doc[:name], da[:start_at], da[:end_at])
-  .left_join(:doctors, id: :doctor_id)
-  .order(da[:id])
+    .select(da[:id], da[:doctor_id],
+            da[:creator_name], da[:creator_tel],
+            doc[:name], da[:start_at], da[:end_at])
+    .left_join(:doctors, id: :doctor_id)
+    .order(da[:id])
 end
 
 get '/doctor/apps' do
-  apps = select_doctor_app().all
+  apps = select_doctor_app.all
 
   apps = apps.map do |a|
     a[:start_at] = datetime_format a[:start_at]
-    a[:end_at] =  datetime_format a[:end_at]
+    a[:end_at] = datetime_format a[:end_at]
     a
   end
 
@@ -109,17 +105,19 @@ end
 post '/doctor/:doctor_id/apps' do
   doctor_id = params[:doctor_id]
 
-  app_id = DB[:doctor_apps].insert(doctor_id: doctor_id,
-    start_at: @payload[:start_at],
-    end_at: @payload[:end_at])
+  app_id = DB[:doctor_apps]
+           .insert(doctor_id: doctor_id,
+                   start_at: @payload[:start_at],
+                   end_at: @payload[:end_at],
+                   creator_name: @payload[:creator_name],
+                   creator_tel: @payload[:creator_tel])
 
   # send email
   da = Sequel[:doctor_apps]
-  send_doctor_app_mail(select_doctor_app()
-    .where(da[:id] => app_id).first
-  )
+  # send_doctor_app_mail(select_doctor_app
+  #   .where(da[:id] => app_id).first)
 
-  [201, JSON.generate(message: 'OK')]  
+  [201, JSON.generate(message: 'OK')]
 end
 
 # vehicle apps
@@ -128,19 +126,19 @@ def select_vehicle_app
   v = Sequel[:vehicles]
 
   DB[:vehicle_apps]
-  .select(va[:id], va[:vehicle_id], v[:plate], v[:type], va[:start_at], va[:end_at])
-  .left_join(:vehicles, id: :vehicle_id).order(va[:id])  
+    .select(va[:id], va[:vehicle_id], v[:plate], v[:type], va[:start_at], va[:end_at])
+    .left_join(:vehicles, id: :vehicle_id).order(va[:id])
 end
 
 get '/vehicle/apps' do
-  va = Sequel[:vehicle_apps]
-  v = Sequel[:vehicles]
+  # va = Sequel[:vehicle_apps]
+  # v = Sequel[:vehicles]
 
-  apps = select_vehicle_app().all
+  apps = select_vehicle_app.all
 
   apps = apps.map do |a|
     a[:start_at] = datetime_format a[:start_at]
-    a[:end_at] =  datetime_format a[:end_at]
+    a[:end_at] = datetime_format a[:end_at]
     a
   end
 
@@ -159,12 +157,12 @@ post '/vehicle/:vehicle_id/apps' do
   vehicle_id = params[:vehicle_id]
 
   app_id = DB[:vehicle_apps].insert(vehicle_id: vehicle_id,
-    start_at: @payload[:start_at],
-    end_at: @payload[:end_at])
-    
+                                    start_at: @payload[:start_at],
+                                    end_at: @payload[:end_at])
+
   # send email
   va = Sequel[:vehicle_apps]
-  send_vehicle_app_mail(select_vehicle_app()
+  send_vehicle_app_mail(select_vehicle_app
     .where(va[:id] => app_id).first)
 
   [201, JSON.generate(message: 'OK')]

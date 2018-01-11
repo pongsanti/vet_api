@@ -20,6 +20,8 @@ DB.create_table(:doctor_apps) do
   foreign_key :doctor_id, :doctors
   DateTime    :start_at
   DateTime    :end_at
+  String      :creator_name
+  String      :creator_tel
 end
 
 DB.create_table(:vehicle_apps) do
