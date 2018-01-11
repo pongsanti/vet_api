@@ -114,8 +114,8 @@ post '/doctor/:doctor_id/apps' do
 
   # send email
   da = Sequel[:doctor_apps]
-  # send_doctor_app_mail(select_doctor_app
-  #   .where(da[:id] => app_id).first)
+  send_doctor_app_mail(select_doctor_app
+    .where(da[:id] => app_id).first)
 
   [201, JSON.generate(message: 'OK')]
 end
